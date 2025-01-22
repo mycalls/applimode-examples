@@ -1,14 +1,15 @@
 rules_version = '2';
 
+// ruleType=verifiedUser
 // 관리자가 지정한 사용자만 사용 가능
 // Allow read access to verified user
 service cloud.firestore {
   match /databases/{database}/documents {
     function isVerified() {
-      return request.auth.uid in ["verifiedUid", "verifiedUid"];
+      return request.auth.uid in [];
     }
     function isAdmin() {
-      return request.auth.uid in ["adminUid", "adminUid"];
+      return request.auth.uid in [];
     }
 
   	match /users/{document} {
@@ -22,7 +23,7 @@ service cloud.firestore {
       allow read: if isVerified();
       allow create: if isVerified() && request.auth.uid == request.resource.data.uid;
       allow update: if request.auth.uid == resource.data.uid || (isVerified() && request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['postCommentCount','viewCount','likeCount', 'dislikeCount', 'sumCount'])) || isAdmin();
+        .hasOnly(['postCommentCount', 'viewCount', 'likeCount', 'dislikeCount', 'sumCount', 'reportCount'])) || isAdmin();
       allow delete: if request.auth.uid == resource.data.uid || isAdmin();
     }
     match /postContents/{document} {
@@ -41,7 +42,7 @@ service cloud.firestore {
       allow read: if isVerified();
       allow create: if isVerified() && request.auth.uid == request.resource.data.uid;
       allow update: if request.auth.uid == resource.data.uid || (isVerified() && request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['replyCount','likeCount', 'dislikeCount', 'sumCount'])) || isAdmin();
+        .hasOnly(['replyCount','likeCount', 'dislikeCount', 'sumCount', 'reportCount'])) || isAdmin();
       allow delete: if isVerified();
     }
     match /postCommentLikes/{document} {
@@ -61,6 +62,30 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if false;
+    }
+    match /userPrompts/{document} {
+    	allow read: if isVerified();
+      allow create: if request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid || isAdmin();
+      allow delete: if request.auth.uid == resource.data.uid || isAdmin();
+    }
+    match /deleteErrors/{document} {
+    	allow read: if isVerified();
+      allow create: if request.auth.uid == request.resource.data.uid || isAdmin();
+      allow update: if request.auth.uid == resource.data.uid || isAdmin();
+      allow delete: if request.auth.uid == resource.data.uid || isAdmin();
+    }
+    match /postReports/{document} {
+    	allow read: if isVerified();
+      allow create: if isVerified() && request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid;
+      allow delete: if isVerified();
+    }
+    match /postCommentReports/{document} {
+    	allow read: if isVerified();
+      allow create: if isVerified() && request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid;
+      allow delete: if isVerified();
     }
   }
 }
